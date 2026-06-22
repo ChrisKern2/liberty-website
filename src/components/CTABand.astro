@@ -1,0 +1,36 @@
+---
+import { business } from "../data/site";
+import Icon from "./Icon.astro";
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  tone?: "red" | "parchment";
+}
+const {
+  title = "Get the Help You Need",
+  subtitle = "Call us today or send us a message — we'll get you a free, no-obligation quote the same day.",
+  tone = "red",
+} = Astro.props;
+
+const isRed = tone === "red";
+const bg = isRed
+  ? "linear-gradient(120% 130% at 80% 20%, #c2434c 0%, #b3303a 55%, #9a2932 100%)"
+  : "#f4eee1";
+const titleColor = isRed ? "#fff" : "#16243d";
+const subColor = isRed ? "rgba(255,255,255,.85)" : "#5b6675";
+---
+<section style={`background:${bg}`}>
+  <div class="wrap" style="padding-top:56px;padding-bottom:56px;display:flex;align-items:center;justify-content:space-between;gap:30px;flex-wrap:wrap">
+    <div style="max-width:560px">
+      <h2 style={`font:700 36px/1.08 var(--font-display);letter-spacing:.01em;color:${titleColor};margin-bottom:10px;text-wrap:balance`}>{title}</h2>
+      <p style={`font:400 17px/1.6 var(--font-body);color:${subColor}`}>{subtitle}</p>
+    </div>
+    <div class="stack-sm" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <a class={isRed ? "btn btn-white" : "btn btn-primary"} href="/contact" style="font:700 16px/1 var(--font-body);padding:17px 30px">Get a Free Quote <Icon name="arrow" size={17} /></a>
+      <a class={isRed ? "btn btn-ghost" : "btn btn-navy"} href={business.phoneHref} style="font:700 16px/1 var(--font-body);padding:17px 26px">
+        <Icon name="phone" size={17} /> {business.phoneDisplay}
+      </a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,109 @@
+---
+import "../styles/global.css";
+import { business, services, towns } from "../data/site";
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path only, e.g. "/services/window-cleaning". Canonical + OG URL are built from site. */
+  path?: string;
+  image?: string;
+  /** Extra JSON-LD objects (Service, FAQPage, town LocalBusiness, etc.). */
+  schema?: object[];
+}
+
+const { title, description, path = "/", image = "/images/hero-home.jpg", schema = [] } = Astro.props;
+
+const site = business.domain;
+const canonical = new URL(path, site).href;
+const ogImage = new URL(image, site).href;
+
+// ---- Toggle this to true once you have genuine reviews to show. ----
+const ENABLE_AGGREGATE_RATING = false;
+
+const areaServed = [
+  ...towns.map((t) => ({ "@type": "City", name: t.name })),
+  { "@type": "AdministrativeArea", name: "Montgomery County, PA" },
+  { "@type": "AdministrativeArea", name: "Chester County, PA" },
+];
+
+const localBusiness: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "HomeAndConstructionBusiness",
+  "@id": `${site}/#business`,
+  name: business.name,
+  url: site,
+  telephone: business.phoneDisplay,
+  email: business.email,
+  image: ogImage,
+  logo: new URL("/images/hero-home.jpg", site).href,
+  priceRange: business.priceRange,
+  foundingDate: String(business.foundedYear),
+  address: {
+    "@type": "PostalAddress",
+    addressRegion: "PA",
+    addressCountry: "US",
+    // {{ADDRESS}} — add streetAddress / addressLocality / postalCode when known.
+  },
+  areaServed,
+  knowsAbout: services.map((s) => s.name),
+  sameAs: [business.social.facebook, business.social.instagram, business.social.google].filter(
+    (u) => u && !u.startsWith("{{"),
+  ),
+};
+
+if (ENABLE_AGGREGATE_RATING) {
+  localBusiness.aggregateRating = {
+    "@type": "AggregateRating",
+    ratingValue: "5.0",
+    reviewCount: business.reviewCount, // fill {{REVIEW_COUNT}} before enabling
+  };
+}
+
+const jsonLd = [localBusiness, ...schema];
+const favicon =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%2316243D'/%3E%3Cpath d='M12 4 L13.9 9.4 L19.6 9.6 L15.1 13.2 L16.7 18.8 L12 15.4 L7.3 18.8 L8.9 13.2 L4.4 9.6 L10.1 9.4 Z' fill='%23B3303A'/%3E%3C/svg%3E";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={favicon} />
+    <meta name="theme-color" content="#16243D" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={business.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Structured data -->
+    {jsonLd.map((obj) => (
+      <script type="application/ld+json" set:html={JSON.stringify(obj)} />
+    ))}
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

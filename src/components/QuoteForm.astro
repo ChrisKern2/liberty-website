@@ -1,0 +1,17 @@
+---
+// Jobber work-request embed — preserved EXACTLY from the original site.
+// Submissions land in Jobber instantly and trigger the auto-reply + setter
+// notification. The clienthub stylesheet is loaded once here.
+import { jobber } from "../data/site";
+---
+<div class="card" style="padding:30px;box-shadow:0 20px 50px rgba(20,30,50,.12);border:none">
+  <link rel="stylesheet" media="screen" href={jobber.cssHref} />
+  <!-- Lead form embedded directly from Jobber. Do not alter the IDs/attributes. -->
+  <div id={jobber.clienthubId}></div>
+  <script
+    is:inline
+    src={jobber.scriptSrc}
+    clienthub_id={jobber.clienthubId}
+    form_url={jobber.formUrl}
+  ></script>
+</div>

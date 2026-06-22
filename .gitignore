@@ -1,3 +1,10 @@
+# Dependencies
+node_modules/
+
+# Astro build output
+dist/
+.astro/
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db
@@ -8,3 +15,4 @@ desktop.ini
 
 # Logs
 *.log
+npm-debug.log*

@@ -1,97 +1,126 @@
-# Liberty Exterior Co. Website
+# Liberty Exterior Co. — Website
 
-A complete, single-page marketing website for Liberty Exterior Co. (window cleaning, pressure washing, and gutter cleaning). Plain HTML, CSS, and JavaScript. No build step, no framework, no dependencies.
+A multi-page, SEO-optimized **Astro + Tailwind CSS** site for Liberty Exterior Co.
+(window cleaning, pressure washing, gutter cleaning) serving Montgomery & Chester
+County, PA. Static output, deploys to Vercel with zero config.
 
-## What's in here
-
-```
-liberty-website/
-  index.html        The entire website (HTML + CSS + JS in one file)
-  images/           Logo-art placeholder illustrations for the hero and 3 services
-  README.md         This file
-```
-
-## Run it locally
-
-It's a static site, so any static server works. From inside this folder:
+## Quick start
 
 ```bash
-# Option A: Python (already installed on most machines)
-python3 -m http.server 8000
-# then open http://localhost:8000
-
-# Option B: Node
-npx serve
+npm install      # install dependencies (Node 18+ required)
+npm run dev      # local dev server at http://localhost:4321
+npm run build    # production build to /dist
+npm run preview  # preview the built site locally
 ```
 
-You can also just double-click `index.html` to open it in a browser. A local server is only needed so the contact form's fetch call behaves like it will in production.
+## How it deploys
 
-## Deploy it (pick one)
+- Pushing to the `main` branch on GitHub auto-deploys to Vercel.
+- `vercel.json` pins the framework to **astro** (`buildCommand: npm run build`,
+  `outputDirectory: dist`) so Vercel builds correctly regardless of the project's
+  original preset.
+- `@astrojs/sitemap` generates `sitemap-index.xml`; `public/robots.txt` points to it.
+  **After deploying, submit `https://libertyexteriorco.com/sitemap-index.xml` in
+  Google Search Console.**
 
-All three give you a free hosted URL. Netlify is the simplest because the contact form works with zero extra setup.
+## Page map
 
-### Netlify (recommended, form works out of the box)
-1. Go to app.netlify.com, drag this `liberty-website` folder onto the page.
-2. That's it. Netlify auto-detects the form (it has `data-netlify="true"`) and emails you submissions. Set the notification email under Site settings > Forms > Form notifications.
+| URL | Source |
+| --- | --- |
+| `/` | `src/pages/index.astro` |
+| `/about` | `src/pages/about.astro` |
+| `/contact` | `src/pages/contact.astro` (Jobber form + phone + hours) |
+| `/services/window-cleaning` | `src/pages/services/[service].astro` |
+| `/services/pressure-washing` | ↑ generated from `services` data |
+| `/services/gutter-cleaning` | ↑ |
+| `/service-areas` | `src/pages/service-areas/index.astro` |
+| `/service-areas/<town>` | `src/pages/service-areas/[town].astro` (one per town) |
+| `/privacy`, `/terms` | legal pages (placeholder copy — review with counsel) |
+| `/sitemap-index.xml` | auto-generated |
 
-### Vercel
-```bash
-npm i -g vercel
-vercel
+Currently generated town pages: blue-bell, whitpain, ambler, malvern, exton,
+west-chester, great-valley, wayne, media, doylestown, newtown.
+
+## Architecture
+
+- **`src/data/site.ts`** — single source of truth. Business facts, the services
+  tree (drives the mega-menu, service grid, and service pages), the towns array,
+  "why choose us" items, stats, and testimonials all live here.
+- **`src/layouts/Layout.astro`** — all `<head>` SEO tags (title, meta description,
+  canonical, Open Graph, Twitter Card), Google Fonts, and the site-wide
+  `LocalBusiness` JSON-LD. Pages pass extra schema (Service, FAQPage, town
+  LocalBusiness) via the `schema` prop.
+- **`src/components/`** — `TopBar`, `Header` (mega-menu), `Hero`, `PageHero`,
+  `ServiceAreaBand`, `ServiceGrid`, `WhyChooseGrid`, `StatBand`, `Testimonials`,
+  `ServiceAreaList`, `CTABand`, `Footer`, `QuoteForm` (Jobber embed), `Logo`, `Icon`.
+- **`src/styles/global.css`** — brand tokens as Tailwind `@theme` (navy `#16243D`,
+  flag-red `#B3303A`, parchment, slate, success green, accents) plus ported
+  component classes (buttons, mega-menu, cards).
+
+## How to add a town
+
+Add one entry to the `towns` array in `src/data/site.ts`:
+
+```ts
+{ slug: "phoenixville", name: "Phoenixville", county: "Chester County",
+  region: "Chester County",
+  blurb: "One or two local sentences about this town." },
 ```
-Follow the prompts. For the form, see "Wiring the contact form" below (use Formspree).
 
-### GitHub Pages
-1. Push this folder to a GitHub repo.
-2. Repo Settings > Pages > deploy from the `main` branch, root folder.
-3. For the form, use Formspree (see below). Netlify Forms does not work on GitHub Pages.
+A page (`/service-areas/phoenixville`), its schema, a sitemap entry, and links from
+the service-area list + footer are all generated automatically on the next build.
 
-### Custom domain
-After deploying, add `libertyexteriorco.com` in your host's domain settings and point your DNS there. Each host has a one-page guide for this.
+## How to add / change a service or sub-service
 
-## Wiring the contact form
+Edit the `services` array in `src/data/site.ts`. Each service drives its own page,
+the mega-menu dropdown, the home service grid, and its Service + FAQPage schema.
 
-The form currently shows a "Request received" confirmation on submit. To actually receive leads, point it at a form service. Two easy options:
+## How to swap photos
 
-### Netlify Forms
-Nothing to do. The form already has `name="quote"`, a hidden `form-name` field, and `data-netlify="true"`. Deploy on Netlify and submissions show up in your dashboard. Add your email under Forms > notifications.
+Drop real photos into `public/images/` using the same filenames and they're picked
+up automatically:
 
-### Formspree (works on any host)
-1. Create a free form at formspree.io and copy its endpoint, e.g. `https://formspree.io/f/abcdwxyz`.
-2. In `index.html`, find the `<form id="quoteForm" ...>` tag and set the `action`:
-   ```html
-   <form id="quoteForm" ... action="https://formspree.io/f/abcdwxyz">
-   ```
-The JavaScript already posts to whatever `action` URL you set and then shows the confirmation. If `action` is empty, it still shows the confirmation so the page never looks broken during testing.
+- `hero-home.jpg` — homepage hero background (currently a placeholder copy of the
+  old hero art). **Replace with a real landscape job photo.**
+- `svc-windows.png`, `svc-wash.png`, `svc-gutter.png` — service card + page images.
 
-## Editing content
-
-Everything is plain text in `index.html`. Common edits:
-
-- **Phone number**: search for `8135975980` (used in `tel:` links) and `(813) 597-5980` (the visible text). Update both.
-- **Email**: search for `chris@libertyexteriorco.com`.
-- **Service area**: search for `the greater metro area` and replace with your city or region.
-- **Copy**: each section is labeled with an HTML comment (`HERO`, `SERVICES`, `HOW IT WORKS`, `WHY CHOOSE`, `QUOTE`, `FOOTER`).
-
-## Swapping the photos
-
-The 4 files in `images/` are placeholder illustrations. Replace them with real job photos using the same filenames and the site picks them up automatically:
-
-- `hero-house.png` — main hero image (shows around 510 x 480, gets cropped to fill)
-- `svc-windows.png`, `svc-wash.png`, `svc-gutter.png` — service cards (show around 345 x 190)
-
-Use landscape photos for best results. Keep the same names, or update the `src` attributes in `index.html`.
+Keep the same names, or update the `image` fields in `src/data/site.ts`. All images
+have descriptive, keyword-aware alt text — update it if the photo changes.
 
 ## Brand reference
 
-- **Fonts**: Oswald (headings, the logo) and Libre Franklin (body). Loaded from Google Fonts in the `<head>`.
-- **Colors**:
-  - Liberty Navy `#16243D`
-  - Flag Red `#B3303A`
-  - Parchment `#F4EEE1`
-  - Slate `#5B6675`
-  - Success green `#1F8A5B` (checkmarks)
+- **Fonts:** Oswald (headings + logo), Libre Franklin (body) via Google Fonts.
+- **Colors:** Navy `#16243D`, Flag Red `#B3303A`, Parchment `#F4EEE1`,
+  Slate `#5B6675`, Success green `#1F8A5B`, accents `#cf6a6f` / `#e07a80`,
+  dark `#0f1a30`.
 
-## Notes for the developer
+## ✅ Placeholder checklist — fill these in
 
-This is production-ready static HTML and can ship as-is. If you'd rather rebuild it in a framework (React, Astro, etc.), treat `index.html` as the visual spec: the colors, fonts, spacing, copy, and section structure are all final. The layout uses CSS grid with inline styles plus a small `<style>` block at the top for hover states and the mobile breakpoints (stacks at 880px and 560px).
+Search the project for `{{` to find every placeholder. All live in
+`src/data/site.ts` unless noted.
+
+- [ ] **`{{REVIEW_COUNT}}`** — number of reviews (hero badge + schema). Once you
+      have genuine reviews, set it, then flip `ENABLE_AGGREGATE_RATING = true` in
+      `src/layouts/Layout.astro` to turn on rich-result star ratings.
+- [ ] **`{{TESTIMONIAL_1/2/3}}`** + customer names/towns — real reviews in
+      `testimonials`.
+- [ ] **`{{HIC_NUMBER}}`** — PA Home Improvement Contractor # (footer). Remove the
+      line if you don't register one.
+- [ ] **`{{ADDRESS}}`** — business address (footer + LocalBusiness schema). Remove
+      if home-based, or add `streetAddress`/`postalCode` in `Layout.astro` and the
+      footer.
+- [ ] **Office hours** — `business.hours` currently shows Mon–Fri 8–6, Sat 9–3, Sun
+      closed. Set your real availability.
+- [ ] **`{{FACEBOOK_URL}}` / `{{INSTAGRAM_URL}}` / `{{GOOGLE_PROFILE_URL}}`** —
+      social links (`business.social`); used in the footer and `sameAs` schema.
+- [ ] **`{{LAST_UPDATED_DATE}}`** + legal copy — `src/pages/privacy.astro` and
+      `terms.astro` contain placeholder policies. Review with counsel.
+- [ ] **Real photos** — replace `public/images/hero-home.jpg` and the service images.
+
+## Bigger SEO wins (off-site)
+
+1. Claim and fully complete a **Google Business Profile** for the Blue Bell / Malvern
+   / Exton area.
+2. Ask every customer for a review the day the job is finished.
+3. After deploy, confirm the new service/town URLs are live and **submit the sitemap
+   in Google Search Console.**
